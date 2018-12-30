@@ -56,7 +56,9 @@ function ENT:UpdateLabel()
 		"NPC: "       .. convert(self:GetNPC()      )  ..
 		"\nWeapon: "  .. convert(self:GetNPCWeapon())  ..
 		"\nDelay: "   ..         self:GetSpawnDelay()  ..
-		"\nMaximum: " ..         self:GetMaxNPCs()
+		"\nMaximum Deployed: " ..         self:GetMaxNPCs()     ..
+		"\nMax Spawns: " ..        self:GetMaxNPCsTotal()     ..
+		"\nRemaining: " ..        (self:GetMaxNPCsTotal() - (self:GetTotalSpawned() - self:GetAliveSpawned()))
 	);
 end
 
@@ -193,6 +195,18 @@ ENT._NWVars = {
 		Name = "SpawnRadius";
 		KeyName = "spawnradius";
 		Default = 16;
+	},
+	{
+		Type = "Int";
+		Name = "AliveSpawned";
+		KeyName = "alivespawned";
+		Default = 0;
+	},
+	{
+		Type = "Int";
+		Name = "TotalSpawned";
+		KeyName = "totalspawned";
+		Default = 0;
 	},
 	{
 		Type = "Bool";

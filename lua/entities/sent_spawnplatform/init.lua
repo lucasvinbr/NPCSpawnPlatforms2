@@ -203,6 +203,8 @@ function ENT:RegisterListeners()
 	self:NetworkVarNotify("NPCWeapon", labelr);
 	self:NetworkVarNotify("SpawnDelay", labelr);
 	self:NetworkVarNotify("MaxNPCs", labelr);
+	self:NetworkVarNotify("AliveSpawned", self.OnNPCKilled);
+	self:NetworkVarNotify("TotalSpawned", self.OnNPCKilled);
 end
 
 function ENT:OnStartDelayChange(_, _, delay)
@@ -546,6 +548,8 @@ function ENT:SpawnOne()
 	self.NPCs[npc] = npc;
 	self.Spawned = self.Spawned + 1;
 	self.TotalSpawned = self.TotalSpawned + 1;
+	self:SetTotalSpawned(self.TotalSpawned);
+	self:SetAliveSpawned(self.Spawned);
 	self.LastSpawn = CurTime();
 
 	if (self.TotalSpawned % self:GetMaxNPCs() == 0) then
@@ -575,8 +579,10 @@ function ENT:NPCKilled(npc)
 		self.LastSpawn = CurTime();
 	end
 	self.Spawned = self.Spawned - 1;
+	self:SetAliveSpawned(self.Spawned);
 	self:TriggerOutput("OnNPCKilled", self);
 	self:TriggerWireOutput("ActiveNPCs", self.Spawned);
+	self:UpdateLabel();
 end
 
 function ENT:Use (activator, caller)
