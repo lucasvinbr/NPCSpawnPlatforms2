@@ -20,13 +20,13 @@ ENT.PrintName      = "NPC Spawn Platform";
 ENT.WireDebugName  = "Spawn Platform";
 ENT.Author         = "Lexi/Devenger";
 ENT.Purpose        = "Spawn a constant(ish) stream of NPCs";
-ENT.Spawnable      = true;
+ENT.Spawnable      = false;
 ENT.AdminOnly      = false;
 ENT.CountKey       = "spawnplatforms";
 
 DEFINE_BASECLASS "base_lexentity";
 
-print("Hello from the Spawn Platform!");
+print("Hello from the Spawn Platform!DISPLAYTEST VERSION");
 
 local reverseLookupCache;
 local function primeLookupCache()
@@ -51,14 +51,29 @@ local function convert( text )
 	return reverseLookupCache[text] or text;
 end
 
+local overlayText = [[
+NPC: %s
+Weapon: %s
+Delay: %0.2f
+Maximum: %d]]
+
+local overlayTextFlipped = "Cannot spawn %ss at this angle!"
+
+
 function ENT:UpdateLabel()
+	if (self:IsActive() and self:IsFlipped()) then
+		self:SetOverlayText(string.format(overlayTextFlipped, convert(self:GetNPC())))
+		return
+	end
+
 	self:SetOverlayText(
-		"NPC: "       .. convert(self:GetNPC()      )  ..
-		"\nWeapon: "  .. convert(self:GetNPCWeapon())  ..
-		"\nDelay: "   ..         self:GetSpawnDelay()  ..
-		"\nMaximum Deployed: " ..         self:GetMaxNPCs()     ..
-		"\nMax Spawns: " ..        self:GetMaxNPCsTotal()     ..
-		"\nRemaining: " ..        (self:GetMaxNPCsTotal() - (self:GetTotalSpawned() - self:GetAliveSpawned()))
+		string.format(
+			overlayText,
+			convert(self:GetNPC()      ),
+			convert(self:GetNPCWeapon()),
+					self:GetSpawnDelay(),
+					self:GetMaxNPCs()
+		)
 	);
 end
 
@@ -80,6 +95,11 @@ ENT._NWVars = {
 		Type = "Bool";
 		Name = "Active";
 		KeyName = "active";
+		Default = false;
+	},
+	{
+		Type = "Bool";
+		Name = "Flipped";
 		Default = false;
 	},
 
@@ -195,18 +215,6 @@ ENT._NWVars = {
 		Name = "SpawnRadius";
 		KeyName = "spawnradius";
 		Default = 16;
-	},
-	{
-		Type = "Int";
-		Name = "AliveSpawned";
-		KeyName = "alivespawned";
-		Default = 0;
-	},
-	{
-		Type = "Int";
-		Name = "TotalSpawned";
-		KeyName = "totalspawned";
-		Default = 0;
 	},
 	{
 		Type = "Bool";

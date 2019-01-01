@@ -38,7 +38,7 @@ npcspawner = {
     end;
     debug2 = function(...)
         if (npcspawner.config.debug == 1) then
-            printd("PLFM L2 (" .. svorcl() .. "):", ...);
+            printd2("PLFM L2 (" .. svorcl() .. "):", ...);
         end
     end;
     send = function(name, tab, who)
@@ -66,7 +66,8 @@ npcspawner = {
         maxinplay   = 20,
         mindelay    = 0.1,
         debug       = 1,
-        sanity      = 1,
+		sanity      = 1,
+		rehydrate   = 1,
     };
     legacy = {
         npc_citizen_medic   = "Medic";
