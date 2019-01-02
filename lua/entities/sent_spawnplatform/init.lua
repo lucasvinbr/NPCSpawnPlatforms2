@@ -131,6 +131,7 @@ function ENT:NPCKilled(npc)
 	end
 	self:TriggerOutput("OnNPCKilled", self);
 	self:TriggerWireOutput("ActiveNPCs", self.Spawned);
+	self:UpdateLabel();
 end
 
 function ENT:Use(activator, caller)
@@ -156,6 +157,7 @@ function ENT:TurnOn()
 	self.TotalSpawned = 0;
 	self:SetSpawnDelay(self:GetStartDelay());
 	self:TriggerWireOutput("TotalNPCsSpawned", self.TotalSpawned);
+	self:UpdateLabel();
 end
 
 function ENT:TurnOff()

@@ -350,6 +350,8 @@ function ENT:SpawnOne()
 	self.TotalSpawned = self.TotalSpawned + 1;
 	self:TriggerWireOutput("TotalNPCsSpawned", self.TotalSpawned);
 
+	self:UpdateLabel();
+
 	self.LastSpawn = CurTime();
 
 	self:TriggerWireOutput("LastNPCSpawned", npc);

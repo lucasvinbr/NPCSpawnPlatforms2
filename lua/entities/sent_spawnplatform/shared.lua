@@ -55,7 +55,8 @@ local overlayText = [[
 NPC: %s
 Weapon: %s
 Delay: %0.2f
-Maximum: %d]]
+Maximum: %d
+Remaining: %d]]
 
 local overlayTextFlipped = "Cannot spawn %ss at this angle!"
 
@@ -72,7 +73,8 @@ function ENT:UpdateLabel()
 			convert(self:GetNPC()      ),
 			convert(self:GetNPCWeapon()),
 					self:GetSpawnDelay(),
-					self:GetMaxNPCs()
+					self:GetMaxNPCs(),
+					self:GetMaxNPCsTotal() - (self.TotalSpawned - self.Spawned)
 		)
 	);
 end
