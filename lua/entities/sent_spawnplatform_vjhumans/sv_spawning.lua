@@ -265,17 +265,19 @@ function ENT:ConfigureNPCHealth(npc)
 	if (chp > hp) then
 		hp = chp;
 	end
-	hp = hp * self:GetNPCHealthMultiplier();
+	if(self:GetVjHealth() ~= 0) then hp = self:GetVjHealth(); end
 	npcspawner.debug2("Health:", hp);
 	npc:SetMaxHealth(hp);
 	npc:SetHealth(hp);
 end
 
 function ENT:ConfigureNPCWeapons(npc)
-	if (npc.SetCurrentWeaponProficiency) then
-		npc:SetCurrentWeaponProficiency(self:GetNPCSkillLevel());
-	end
-	npc.Weapon_FiringDistanceFar = self:GetVJShootDist();
+	if(self:GetVjShootDist() ~= 0) then npc.Weapon_FiringDistanceFar = self:GetVjShootDist(); end
+	if(self:GetVjMeleeDamage() ~= 0) then npc.MeleeAttackDamage = self:GetVjMeleeDamage(); end
+	npc.WeaponSpread = self:GetVjWeapSpread();
+	npc.HasShootWhileMoving = self:GetVjCanMoveShoot();
+	npc.HasGrenadeAttack = self:GetVjCanGrenade();
+	npc.HasMeleeAttack = self:GetVjCanMelee();
 end
 
 function ENT:ConfigureNPCCollisions(npc)
@@ -368,11 +370,6 @@ function ENT:SpawnOne()
 				npc:CPPISetOwner(ply);
 			end
 		end
-	end
-
-	if (self:GetDelayDecrease() > 0 and self.TotalSpawned % self:GetMaxNPCs() == 0) then
-		npcspawner.debug(self.TotalSpawned.." NPCs spawned, decreasing delay ("..self:GetSpawnDelay()..") by "..self:GetDelayDecrease());
-		self:SetSpawnDelay(math.max(self:GetSpawnDelay() - self:GetDelayDecrease(), npcspawner.config.mindelay));
 	end
 
 	if (self.TotalSpawned == self:GetMaxNPCsTotal()) then -- Since totallimit is 0 for off and totalspawned will always be > 0 at this point, shit works.

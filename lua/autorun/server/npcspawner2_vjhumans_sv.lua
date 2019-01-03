@@ -15,10 +15,10 @@
     limitations under the License.
 --]]
 
-AddCSLuaFile("autorun/npcspawner2.lua");
-AddCSLuaFile("autorun/client/npcspawner2_cl.lua");
+AddCSLuaFile("autorun/npcspawner2_vjhumans.lua");
+AddCSLuaFile("autorun/client/npcspawner2_vjhumans_cl.lua");
 
-local datapath = "npcspawner2"
+local datapath = "npcspawner2_vjhumans"
 if (file.IsDir(datapath, "DATA")) then
 	local function readfile(fname)
 		fname = datapath .. "/" .. fname .. ".txt";
@@ -83,4 +83,4 @@ hook.Add("PlayerInitialSpawn", "NPCSpawner PlayerInitialSpawn", syncConfig);
 if (not ConVarExists("sbox_maxspawnplatforms")) then
 	CreateConVar("sbox_maxspawnplatforms", 3);
 end
-cleanup.Register("sent_spawnplatform");
+cleanup.Register("sent_spawnplatform_vjhumans");

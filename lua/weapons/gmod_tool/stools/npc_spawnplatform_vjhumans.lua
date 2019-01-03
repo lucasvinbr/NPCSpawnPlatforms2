@@ -16,7 +16,7 @@
 --]]
 
 
-local ClassName = 'npc_spawnplatform';
+local ClassName = 'npc_spawnplatform_vjhumans';
 
 local function lang(id)
 	return '#Tool.' .. ClassName .. '.' .. id;
@@ -41,19 +41,23 @@ local cvars = {
 	onkey         = "2";
 	offkey        = "1";
 	nocollide     = "1";
-	healthmul     = "1";
 	toggleable    = "1";
 	autoremove    = "1";
 	squadoverride = "1";
 	customsquads  = "0";
 	totallimit    = "0";
-	decrease      = "0";
 	active        = "0";
 	oldspawning   = "0";
-	skill         = WEAPON_PROFICIENCY_AVERAGE;
 	frozen        = "1";
 
-	vjshootdist     = "2000";
+	vjhealth      = "0";
+	vjshootdist   = "2000";
+	vjweaponspread= "2";
+	vjmeleedamage = "15";
+	vjcanmelee    = "1";
+	vjcangrenade  = "1";
+	vjcanmoveshoot= "1";
+	
 }
 
 cleanup.Register("Spawnplatforms");
@@ -73,12 +77,12 @@ function TOOL:LeftClick(trace)
 		return true;
 	elseif (not owner:CheckLimit("spawnplatforms")) then
 		return false;
-	elseif (trace.Entity:GetClass() == "sent_spawnplatform") then
+	elseif (trace.Entity:GetClass() == "sent_spawnplatform_vjhumans") then
 		self:SetKVs(trace.Entity);
 		npcspawner.debug(owner, "has applied his settings to an existing platform:", trace.Entity);
 		return true;
 	end
-	local ent = ents.Create("sent_spawnplatform");
+	local ent = ents.Create("sent_spawnplatform_vjhumans");
 	self:SetKVs(ent);
 	ent:SetKeyValue("ply", owner:EntIndex());
 	ent:SetPos(trace.HitPos);
@@ -91,7 +95,7 @@ function TOOL:LeftClick(trace)
 	ent:SetPlayer(owner);
 	local min = ent:OBBMins();
 	ent:SetPos(trace.HitPos - trace.HitNormal * min.y);
-	owner:AddCount("sent_spawnplatform", ent);
+	owner:AddCount("sent_spawnplatform_vjhumans", ent);
 	undo.Create("NPC Spawn Platform");
 		undo.SetPlayer(self:GetOwner());
 		undo.AddEntity(ent);
@@ -105,7 +109,7 @@ function TOOL:RightClick(trace)
 	local owner = self:GetOwner();
 	local ent = trace.Entity;
 	npcspawner.debug2(owner, "has right-clicked the STool on", ent);
-	if (IsValid(ent) and ent:GetClass() == "sent_spawnplatform") then
+	if (IsValid(ent) and ent:GetClass() == "sent_spawnplatform_vjhumans") then
 		if (CLIENT) then return true end
 		for key in pairs(self.ClientConVar) do
 			local res = ent:GetNetworkKeyValue(key);
@@ -129,7 +133,7 @@ if (SERVER) then return; end
 local function AddToolLanguage(id, lang)
 	language.Add('tool.' .. ClassName .. '.' .. id, lang);
 end
-AddToolLanguage("name", "NPC Spawn Platforms");
+AddToolLanguage("name", "NPC Spawn Platforms for VJ Humans");
 AddToolLanguage("desc", "Create a platform that will constantly make NPCs.");
 AddToolLanguage("0",    "Left-click: Spawn/Update Platform. Right-click: Copy Platform Data.");
 -- Controls
@@ -154,8 +158,20 @@ AddToolLanguage("customsquads",  "Use Global Squad");
 AddToolLanguage("squadoverride", "Global Squad Number");
 AddToolLanguage("oldspawning",   "Use old spawning mode");
 AddToolLanguage("vjshootdist",   "Shoot Distance");
+AddToolLanguage("vjweaponspread","Weapon Spread");
+AddToolLanguage("vjmeleedamage", "Melee Damage");
+AddToolLanguage("vjcangrenade",  "Can Use Grenades");
+AddToolLanguage("vjcanmelee",   "Can Use Melee Attack");
+AddToolLanguage("vjcanmoveshoot",   "Can Shoot While Moving");
+AddToolLanguage("vjhealth",   "Override Health");
 -- Control Descs
-AddToolLanguage("vjshootdist.desc",         "How far the spawned NPC can shoot (VJ Base NPCs Only)");
+AddToolLanguage("vjshootdist.desc",         "How far the spawned NPC can shoot");
+AddToolLanguage("vjcangrenade.desc",         "Can the NPC throw grenades?");
+AddToolLanguage("vjcanmelee.desc",         "Can the NPC use melee attacks when close?");
+AddToolLanguage("vjcanmoveshoot.desc",         "Can the NPC move and shoot at the same time?");
+AddToolLanguage("vjhealth.desc",         "Sets a new max health for the spawned NPC. If set to 0, will use the NPC's default");
+AddToolLanguage("vjmeleedamage.desc",         "The damage caused by the NPC's melee attack");
+AddToolLanguage("vjweaponspread.desc",         "The NPC's weapon accuracy. The closer to 0 the better");
 AddToolLanguage("skill.desc",         string.format("Where %d is terrible and %d is perfect", WEAPON_PROFICIENCY_POOR, WEAPON_PROFICIENCY_PERFECT));
 AddToolLanguage("delay.desc",         "The delay between each NPC spawn.");
 AddToolLanguage("decrease.desc",      "How much to decrease the delay by every time you kill every NPC spawned.");
@@ -172,6 +188,7 @@ AddToolLanguage("squads.help2", "If you want a squad to cover more than one plat
 -- Panels
 AddToolLanguage("panel_npc",          "NPC Selection");
 AddToolLanguage("panel_spawning",     "NPC Spawn Rates");
+AddToolLanguage("panel_vjhuman",     "VJ Human Settings");
 AddToolLanguage("panel_activation",   "Platform Activation");
 AddToolLanguage("panel_positioning",  "NPC Positioning");
 AddToolLanguage("panel_other",        "Other");
@@ -210,7 +227,7 @@ function TOOL.BuildCPanel(CPanel)
 
 	CPanel:AddControl("ComboBox", {
 		Label   = "#Presets";
-		Folder  = "spawnplatform";
+		Folder  = "spawnplatform_vjhumans";
 		CVars   = CVars;
 		Options = {
 			default = defaults;
@@ -229,14 +246,6 @@ function TOOL.BuildCPanel(CPanel)
 		-- Weapon select
 		AddControl(CPanel, "NPCWeaponSelecter", "weapon");
 
-		-- Skill select
-		AddControl(CPanel, "Slider", "skill", {
-			-- Rely on the fact that the WEAPON_PROFICIENCY enums are from 0 to 5
-			Min     = WEAPON_PROFICIENCY_POOR;
-			Max     = WEAPON_PROFICIENCY_PERFECT;
-			Description = true;
-		});
-
 	end
 
 	do
@@ -247,13 +256,6 @@ function TOOL.BuildCPanel(CPanel)
 			Type        = "Float";
 			Min         = npcspawner.config.mindelay;
 			Max         = 60;
-			Description = true;
-		});
-		-- Timer Reduction
-		AddControl(CPanel, "Slider", "decrease", {
-			Type        = "Float";
-			Min         = 0;
-			Max         = 2;
 			Description = true;
 		});
 		-- Maximum select
@@ -274,6 +276,44 @@ function TOOL.BuildCPanel(CPanel)
 		AddControl(CPanel, "Checkbox", "autoremove", {
 			Description = true;
 		});
+	end
+	
+	do -- VJ Human stuff
+		local CPanel = AddControl(CPanel, "ControlPanel", "panel_vjhuman");
+		AddControl(CPanel, "Slider", "vjhealth", {
+			Type        = "Integer";
+			Min         = 0;
+			Max         = 300;
+			Description = true;
+		});
+		AddControl(CPanel, "Slider", "vjshootdist", {
+			Type        = "Float";
+			Min         = 0;
+			Max         = 10000;
+			Description = true;
+		});
+		AddControl(CPanel, "Slider", "vjweaponspread", {
+			Type        = "Float";
+			Min         = 0;
+			Max         = 20;
+			Description = true;
+		});
+		AddControl(CPanel, "Checkbox", "vjcanmoveshoot", {
+			Description = true;
+		});
+		AddControl(CPanel, "Checkbox", "vjcanmelee", {
+			Description = true;
+		});
+		AddControl(CPanel, "Slider", "vjmeleedamage", {
+			Type        = "Integer";
+			Min         = 0;
+			Max         = 300;
+			Description = true;
+		});
+		AddControl(CPanel, "Checkbox", "vjcangrenade", {
+			Description = true;
+		});
+		
 	end
 
 	do
@@ -319,20 +359,6 @@ function TOOL.BuildCPanel(CPanel)
 	do -- Other
 		local CPanel = AddControl(CPanel, "ControlPanel", "panel_other", {
 			Closed = true;
-		});
-		--Healthmul select
-		AddControl(CPanel, "Slider", "healthmul", {
-			Type        = "Float";
-			Min         = 0.5;
-			Max         = 5;
-			Description = true;
-		});
-		--Shoot Dist Slider
-		AddControl(CPanel, "Slider", "vjshootdist", {
-			Type        = "Float";
-			Min         = 0;
-			Max         = 10000;
-			Description = true;
 		});
 		-- Global Squad On/Off
 		AddControl(CPanel, "Checkbox", "frozen");

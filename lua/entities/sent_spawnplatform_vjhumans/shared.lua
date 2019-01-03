@@ -16,7 +16,7 @@
 --]]
 
 ENT.Type           = "anim";
-ENT.PrintName      = "NPC Spawn Platform";
+ENT.PrintName      = "NPC Spawn Platform (VJ)";
 ENT.WireDebugName  = "Spawn Platform";
 ENT.Author         = "Lexi/Devenger";
 ENT.Purpose        = "Spawn a constant(ish) stream of NPCs";
@@ -26,7 +26,7 @@ ENT.CountKey       = "spawnplatforms";
 
 DEFINE_BASECLASS "base_lexentity";
 
-print("Hello from the Spawn Platform!DISPLAYTEST VERSION");
+print("Hello from the Spawn Platform!VJ HUMAN VERSION");
 
 local reverseLookupCache;
 local function primeLookupCache()
@@ -117,18 +117,6 @@ ENT._NWVars = {
 		KeyName = "weapon";
 		Default = "weapon_smg1";
 	},
-	{
-		Type = "Float";
-		Name = "NPCHealthMultiplier";
-		KeyName = "healthmul";
-		Default = 1;
-	},
-	{
-		Type = "Int";
-		Name = "NPCSkillLevel";
-		KeyName = "skill";
-		Default = WEAPON_PROFICIENCY_AVERAGE;
-	},
 
 	{
 		Type = "Int";
@@ -175,12 +163,6 @@ ENT._NWVars = {
 			Set = StartDelayCustomSet
 		};
 		Default = 5;
-	},
-	{
-		Type = "Float";
-		Name = "DelayDecrease";
-		KeyName = "decrease";
-		Default = 0;
 	},
 	{
 		Type = "Float";
@@ -242,11 +224,47 @@ ENT._NWVars = {
 		KeyName = "ply";
 	},
 	{
+		Type = "Int";
+		Name = "VjHealth";
+		KeyName = "vjhealth";
+		Default = 0;
+	},
+	{
+		Type = "Int";
+		Name = "VjMeleeDamage";
+		KeyName = "vjmeleedamage";
+		Default = 0;
+	},
+	{
 		Type = "Float";
-		Name = "VJShootDist";
+		Name = "VjShootDist";
 		KeyName = "vjshootdist";
 		Default = 2000;
-	}
+	},
+	{
+		Type = "Float";
+		Name = "VjWeapSpread";
+		KeyName = "vjweaponspread";
+		Default = 2;
+	},
+	{
+		Type = "Bool";
+		Name = "VjCanMoveShoot";
+		KeyName = "vjcanmoveshoot";
+		Default = true;
+	},
+	{
+		Type = "Bool";
+		Name = "VjCanGrenade";
+		KeyName = "vjcangrenade";
+		Default = true;
+	},
+	{
+		Type = "Bool";
+		Name = "VjCanMelee";
+		KeyName = "vjcanmelee";
+		Default = true;
+	},
 }
 
 function ENT:SetupDataTables()
