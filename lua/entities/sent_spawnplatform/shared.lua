@@ -241,6 +241,12 @@ ENT._NWVars = {
 		Name = "PlayerID";
 		KeyName = "ply";
 	},
+	{
+		Type = "Float";
+		Name = "VJShootDist";
+		KeyName = "vjshootdist";
+		Default = 2000;
+	}
 }
 
 function ENT:SetupDataTables()

@@ -52,6 +52,8 @@ local cvars = {
 	oldspawning   = "0";
 	skill         = WEAPON_PROFICIENCY_AVERAGE;
 	frozen        = "1";
+
+	vjshootdist     = "2000";
 }
 
 cleanup.Register("Spawnplatforms");
@@ -151,7 +153,9 @@ AddToolLanguage("frozen",        "Spawn the platform frozen");
 AddToolLanguage("customsquads",  "Use Global Squad");
 AddToolLanguage("squadoverride", "Global Squad Number");
 AddToolLanguage("oldspawning",   "Use old spawning mode");
+AddToolLanguage("vjshootdist",   "Shoot Distance");
 -- Control Descs
+AddToolLanguage("vjshootdist.desc",         "How far the spawned NPC can shoot (VJ Base NPCs Only)");
 AddToolLanguage("skill.desc",         string.format("Where %d is terrible and %d is perfect", WEAPON_PROFICIENCY_POOR, WEAPON_PROFICIENCY_PERFECT));
 AddToolLanguage("delay.desc",         "The delay between each NPC spawn.");
 AddToolLanguage("decrease.desc",      "How much to decrease the delay by every time you kill every NPC spawned.");
@@ -321,6 +325,13 @@ function TOOL.BuildCPanel(CPanel)
 			Type        = "Float";
 			Min         = 0.5;
 			Max         = 5;
+			Description = true;
+		});
+		--Shoot Dist Slider
+		AddControl(CPanel, "Slider", "vjshootdist", {
+			Type        = "Float";
+			Min         = 0;
+			Max         = 10000;
 			Description = true;
 		});
 		-- Global Squad On/Off

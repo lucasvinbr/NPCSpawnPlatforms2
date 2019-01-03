@@ -275,6 +275,7 @@ function ENT:ConfigureNPCWeapons(npc)
 	if (npc.SetCurrentWeaponProficiency) then
 		npc:SetCurrentWeaponProficiency(self:GetNPCSkillLevel());
 	end
+	npc.Weapon_FiringDistanceFar = self:GetVJShootDist();
 end
 
 function ENT:ConfigureNPCCollisions(npc)
