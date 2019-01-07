@@ -51,6 +51,41 @@ npcspawner.recieve("NPCSpawner Config", function(data)
 	end
 end);
 
+concommand.Add( "log_remainingvjspawnplatnpcs", function()
+	local alliesRemaining = {};
+	local enemiesRemaining = {};
+
+	local function GetRemainingNPCsInPlat(platform)
+		return platform:GetMaxNPCsTotal() - (platform:GetTotalSpawnedNPCs() - platform:GetCurSpawnedNPCs());
+	end
+
+	for _, plat in pairs( ents.FindByClass( "sent_spawnplatform_vjhumans" ) ) do
+		if (plat:IsVjHostile()) then
+			if(enemiesRemaining[plat:GetNPC()]) then
+				enemiesRemaining[plat:GetNPC()] = enemiesRemaining[plat:GetNPC()] + GetRemainingNPCsInPlat(plat);
+			else
+				enemiesRemaining[plat:GetNPC()] = GetRemainingNPCsInPlat(plat);
+			end
+		else
+			if(alliesRemaining[plat:GetNPC()]) then
+				alliesRemaining[plat:GetNPC()] = alliesRemaining[plat:GetNPC()] + GetRemainingNPCsInPlat(plat);
+			else
+				alliesRemaining[plat:GetNPC()] = GetRemainingNPCsInPlat(plat);
+			end
+		end
+	end
+
+	print("Remaining allies in VJ human spawnplatforms:");
+	for name, amount in pairs(alliesRemaining) do
+		print(name .. " : " .. tostring(amount));
+	end
+
+	print("Remaining hostiles in VJ human spawnplatforms:");
+	for name, amount in pairs(enemiesRemaining) do
+		print(name .. " : " .. tostring(amount));
+	end
+end )
+
 -----------------------------------
 -- Lexical Patented Corpse Eater --
 -----------------------------------
@@ -79,6 +114,7 @@ addPanelLabel("adminonly", "Admins Only", "Prevent normal users from spawning pl
 addPanelLabel("callhooks", "Call Sandbox Hooks", "Act as if the user had used the spawn menu to spawn NPCs. This will force the platform to obey entity limits etc.")
 addPanelLabel("maxinplay", "Max NPCs per Platform", "How many NPCs a single platform may have alive at once")
 addPanelLabel("mindelay", "Minimum Spawn Delay", "The minimum delay a platform must wait before spawning a new NPC")
+addPanelLabel("logremaining", "Print Remaining NPCs to Console", "Prints the amount of NPCs remaining for the platforms, separated by their 'isHostile' option")
 addPanelLabel("sanity", "Valid NPC Check", "Only spawn NPCs on the NPC list. If you disable this option, players can potentially spawn literally any entity they want.")
 addPanelLabel("debug", "Enable Developer Logging", "Enable or disable diagnostic messages. Requires the convar 'developer' to be 1 or 2")
 addPanelLabel("dangerzone", "Danger Zone")
@@ -92,6 +128,12 @@ local function clientOptions(panel)
 		Label = lang("cleanupcorpses"),
 		Help = true,
 		Command = "cleanupcorpses",
+	});
+
+	panel:AddControl("Button", {
+		Label = lang("logremaining"),
+		Help = true,
+		Command = "log_remainingvjspawnplatnpcs",
 	});
 end
 

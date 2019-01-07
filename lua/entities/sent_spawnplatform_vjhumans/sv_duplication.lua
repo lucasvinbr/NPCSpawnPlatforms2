@@ -18,7 +18,7 @@
 DEFINE_BASECLASS(ENT.Base);
 
 -- The built in duplicator function messes with the platform too much
-duplicator.RegisterEntityClass("sent_spawnplatform", function(ply, data)
+duplicator.RegisterEntityClass("sent_spawnplatform_vjhumans", function(ply, data)
 	if (npcspawner.config.adminonly == 1 and IsValid(ply) and not ply:IsAdmin()) then
 		npcspawner.debug(ply, "tried to duplicate a platform in admin mode but isn't an admin!");
 		return nil;
@@ -77,12 +77,12 @@ function ENT:PostEntityPaste(ply, _, entList)
 			end
 
 			self:ConfigureNPCOwnership(ent)
-			self.Spawned = self.Spawned + 1;
+			self:SetCurSpawnedNPCs(self:GetCurSpawnedNPCs() + 1);
 		end
 	end
 
 	-- Check to see if we didn't manage to save some of our NPCs
-	local missing = self._saveRestore.numSpawned - self.Spawned;
+	local missing = self._saveRestore.numSpawned - self:GetCurSpawnedNPCs();
 	if (missing > 0 and npcspawner.config.rehydrate == 1) then
 		npcspawner.debug(self, "is spawning", missing, "NPCs to make up its deficit")
 		for i = 1, missing do
@@ -94,13 +94,13 @@ function ENT:PostEntityPaste(ply, _, entList)
 			end
 		end
 	else
-		self:TriggerWireOutput("ActiveNPCs", self.Spawned);
+		self:TriggerWireOutput("ActiveNPCs", self:GetCurSpawnedNPCs());
 		if (lastNPC) then
 			self:TriggerWireOutput("LastNPCSpawned", lastNPC);
 		end
 	end
-	self.TotalSpawned = self._saveRestore.total;
-	self:TriggerWireOutput("TotalNPCsSpawned", self.TotalSpawned);
+	self:SetTotalSpawnedNPCs(self._saveRestore.total);
+	self:TriggerWireOutput("TotalNPCsSpawned", self:GetTotalSpawnedNPCs());
 
 	-- Restore LastSpawn so saves are consistent
 	npcspawner.debug2("Setting LastSpawn to be", self._saveRestore.lastSpawn, "seconds in the past");
@@ -120,8 +120,8 @@ function ENT:OnEntityCopyTableFinish(tab)
 	-- For save/restore
 	tab._saveRestore = {
 		creationID = self:GetCreationID(),
-		numSpawned = self.Spawned,
-		total = self.TotalSpawned,
+		numSpawned = self:GetCurSpawnedNPCs(),
+		total = self:GetTotalSpawnedNPCs(),
 		lastSpawn = self.LastSpawn - CurTime(),
 	};
 end

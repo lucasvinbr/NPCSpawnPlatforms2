@@ -70,7 +70,7 @@ function ENT:Initialize()
 	end
 
 	self:ResetLastSpawn();
-	self.Spawned = 0;
+	self:SetCurSpawnedNPCs(0);
 	self.NPCs    = {};
 	self:UpdateLabel();
 
@@ -80,7 +80,7 @@ end
 function ENT:CanSpawnNPC()
 	return (
 		self:IsActive()
-		and self.Spawned < self:GetMaxNPCs()
+		and self:GetCurSpawnedNPCs() < self:GetMaxNPCs()
 		and (self.LastSpawn + self:GetSpawnDelay()) <= CurTime()
 	)
 end
@@ -121,16 +121,16 @@ function ENT:NPCKilled(npc)
 	npcspawner.debug2("NPC Killed:", npc);
 	self.NPCs[npc] = nil;
 	-- Make the delay apply after the nth NPC dies.
-	if (not self:GetLegacySpawnMode() and self.Spawned >= self:GetMaxNPCs()) then
+	if (not self:GetLegacySpawnMode() and self:GetCurSpawnedNPCs() >= self:GetMaxNPCs()) then
 		self.LastSpawn = CurTime();
 	end
-	self.Spawned = self.Spawned - 1;
+	self:SetCurSpawnedNPCs(self:GetCurSpawnedNPCs() - 1);
 	-- "This should never happen"
-	if (self.Spawned < 0) then
-		self.Spawned = 0
+	if (self:GetCurSpawnedNPCs() < 0) then
+		self:SetCurSpawnedNPCs(0);
 	end
 	self:TriggerOutput("OnNPCKilled", self);
-	self:TriggerWireOutput("ActiveNPCs", self.Spawned);
+	self:TriggerWireOutput("ActiveNPCs", self:GetCurSpawnedNPCs());
 	self:UpdateLabel();
 end
 
@@ -154,9 +154,9 @@ end
 
 function ENT:TurnOn()
 	self:SetActive(true);
-	self.TotalSpawned = 0;
+	self:SetTotalSpawnedNPCs(0);
 	self:SetSpawnDelay(self:GetStartDelay());
-	self:TriggerWireOutput("TotalNPCsSpawned", self.TotalSpawned);
+	self:TriggerWireOutput("TotalNPCsSpawned", self:GetTotalSpawnedNPCs());
 	self:UpdateLabel();
 end
 
@@ -199,8 +199,8 @@ function ENT:RemoveNPCs()
 		end
 	end
 	self.NPCs = {};
-	self.Spawned = 0;
-	self:TriggerWireOutput("ActiveNPCs", self.Spawned);
+	self:SetCurSpawnedNPCs(0);
+	self:TriggerWireOutput("ActiveNPCs", self:GetCurSpawnedNPCs());
 end
 
 --[[ Hammer I/O ]]--

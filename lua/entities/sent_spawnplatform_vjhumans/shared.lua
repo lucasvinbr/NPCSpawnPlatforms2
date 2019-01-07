@@ -70,11 +70,11 @@ function ENT:UpdateLabel()
 	self:SetOverlayText(
 		string.format(
 			overlayText,
-			convert(self:GetNPC()      ),
+			(convert(self:GetNPC()      ) .. (self:IsVjHostile() and " (Hostile)" or "")),
 			convert(self:GetNPCWeapon()),
 					self:GetSpawnDelay(),
 					self:GetMaxNPCs(),
-					self:GetMaxNPCsTotal() - (self.TotalSpawned - self.Spawned)
+					self:GetMaxNPCsTotal() - (self:GetTotalSpawnedNPCs() - self:GetCurSpawnedNPCs())
 		)
 	);
 end
@@ -130,7 +130,18 @@ ENT._NWVars = {
 		KeyName = "totallimit";
 		Default = 0;
 	},
-
+	{
+		Type = "Int";
+		Name = "TotalSpawnedNPCs";
+		KeyName = "totalspawned";
+		Default = 0;
+	},
+	{
+		Type = "Int";
+		Name = "CurSpawnedNPCs";
+		KeyName = "curspawned";
+		Default = 0;
+	},
 	{
 		Type = "Int";
 		Name = "OnKey";
@@ -225,6 +236,12 @@ ENT._NWVars = {
 	},
 	{
 		Type = "Int";
+		Name = "TeamNumber";
+		KeyName = "teamnum";
+		Default = 0;
+	},
+	{
+		Type = "Int";
 		Name = "VjHealth";
 		KeyName = "vjhealth";
 		Default = 0;
@@ -264,6 +281,12 @@ ENT._NWVars = {
 		Name = "VjCanMelee";
 		KeyName = "vjcanmelee";
 		Default = true;
+	},
+	{
+		Type = "Bool";
+		Name = "VjHostile";
+		KeyName = "vjishostile";
+		Default = false;
 	},
 }
 

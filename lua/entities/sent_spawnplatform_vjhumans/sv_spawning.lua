@@ -290,6 +290,7 @@ end
 
 function ENT:ConfigureNPCOwnership(npc)
 	npc:CallOnRemove("NPCSpawnPlatform", onremove, self);
+	npc.PlayerFriendly = !self:IsVjHostile();
 	self.NPCs[npc] = npc;
 	duplicator.StoreEntityModifier(npc, self.__MODIFIER_ID, {
 		id = self:GetCreationID(),
@@ -347,11 +348,11 @@ function ENT:SpawnOne()
 	self:ConfigureNPCCollisions(npc);
 	self:ConfigureNPCOwnership(npc);
 
-	self.Spawned = self.Spawned + 1;
-	self:TriggerWireOutput("ActiveNPCs", self.Spawned);
+	self:SetCurSpawnedNPCs(self:GetCurSpawnedNPCs() + 1);
+	self:TriggerWireOutput("ActiveNPCs", self:GetCurSpawnedNPCs());
 
-	self.TotalSpawned = self.TotalSpawned + 1;
-	self:TriggerWireOutput("TotalNPCsSpawned", self.TotalSpawned);
+	self:SetTotalSpawnedNPCs(self:GetTotalSpawnedNPCs() + 1);
+	self:TriggerWireOutput("TotalNPCsSpawned", self:GetTotalSpawnedNPCs());
 
 	self:UpdateLabel();
 
@@ -372,7 +373,7 @@ function ENT:SpawnOne()
 		end
 	end
 
-	if (self.TotalSpawned == self:GetMaxNPCsTotal()) then -- Since totallimit is 0 for off and totalspawned will always be > 0 at this point, shit works.
+	if (self:GetTotalSpawnedNPCs() == self:GetMaxNPCsTotal()) then -- Since totallimit is 0 for off and totalspawned will always be > 0 at this point, shit works.
 		npcspawner.debug("totallimit ("..self:GetMaxNPCsTotal()..") hit. Turning off.");
 		self:TriggerOutput("OnLimitReached", self);
 		self:TurnOff();
@@ -380,4 +381,3 @@ function ENT:SpawnOne()
 
 	return true;
 end
-

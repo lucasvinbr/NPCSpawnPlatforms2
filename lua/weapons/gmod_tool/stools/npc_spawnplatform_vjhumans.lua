@@ -57,7 +57,7 @@ local cvars = {
 	vjcanmelee    = "1";
 	vjcangrenade  = "1";
 	vjcanmoveshoot= "1";
-	
+	vjishostile   = "0";
 }
 
 cleanup.Register("Spawnplatforms");
@@ -83,7 +83,6 @@ function TOOL:LeftClick(trace)
 		return true;
 	end
 	local ent = ents.Create("sent_spawnplatform_vjhumans");
-	self:SetKVs(ent);
 	ent:SetKeyValue("ply", owner:EntIndex());
 	ent:SetPos(trace.HitPos);
 	local ang = trace.HitNormal:Angle();
@@ -93,6 +92,7 @@ function TOOL:LeftClick(trace)
 	ent:Spawn();
 	ent:Activate();
 	ent:SetPlayer(owner);
+	self:SetKVs(ent);
 	local min = ent:OBBMins();
 	ent:SetPos(trace.HitPos - trace.HitNormal * min.y);
 	owner:AddCount("sent_spawnplatform_vjhumans", ent);
@@ -164,6 +164,7 @@ AddToolLanguage("vjcangrenade",  "Can Use Grenades");
 AddToolLanguage("vjcanmelee",   "Can Use Melee Attack");
 AddToolLanguage("vjcanmoveshoot",   "Can Shoot While Moving");
 AddToolLanguage("vjhealth",   "Override Health");
+AddToolLanguage("vjishostile",   "Is Hostile");
 -- Control Descs
 AddToolLanguage("vjshootdist.desc",         "How far the spawned NPC can shoot");
 AddToolLanguage("vjcangrenade.desc",         "Can the NPC throw grenades?");
@@ -172,6 +173,7 @@ AddToolLanguage("vjcanmoveshoot.desc",         "Can the NPC move and shoot at th
 AddToolLanguage("vjhealth.desc",         "Sets a new max health for the spawned NPC. If set to 0, will use the NPC's default");
 AddToolLanguage("vjmeleedamage.desc",         "The damage caused by the NPC's melee attack");
 AddToolLanguage("vjweaponspread.desc",         "The NPC's weapon accuracy. The closer to 0 the better");
+AddToolLanguage("vjishostile.desc",         "Is the NPC hostile to the player and HL2 Resistance?");
 AddToolLanguage("skill.desc",         string.format("Where %d is terrible and %d is perfect", WEAPON_PROFICIENCY_POOR, WEAPON_PROFICIENCY_PERFECT));
 AddToolLanguage("delay.desc",         "The delay between each NPC spawn.");
 AddToolLanguage("decrease.desc",      "How much to decrease the delay by every time you kill every NPC spawned.");
@@ -277,7 +279,7 @@ function TOOL.BuildCPanel(CPanel)
 			Description = true;
 		});
 	end
-	
+
 	do -- VJ Human stuff
 		local CPanel = AddControl(CPanel, "ControlPanel", "panel_vjhuman");
 		AddControl(CPanel, "Slider", "vjhealth", {
@@ -313,7 +315,11 @@ function TOOL.BuildCPanel(CPanel)
 		AddControl(CPanel, "Checkbox", "vjcangrenade", {
 			Description = true;
 		});
-		
+
+		AddControl(CPanel, "Checkbox", "vjishostile", {
+			Description = true;
+		});
+
 	end
 
 	do
