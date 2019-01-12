@@ -74,17 +74,18 @@ concommand.Add( "log_remainingvjspawnplatnpcs", function()
 			end
 		end
 	end
+end);
 
-	print("Remaining allies in VJ human spawnplatforms:");
-	for name, amount in pairs(alliesRemaining) do
-		print(name .. " : " .. tostring(amount));
+concommand.Add( "debug_log_vjspawnplatpresetinfo", function()
+	for presetName, presetData in pairs(presets.GetTable("spawnplatform_vjhumans")) do
+		print("preset: " .. presetName);
+		print("data:");
+		for k, v in pairs(presetData) do
+			print(k .. ": " .. v);
+		end
+		print("---end of preset data---");
 	end
-
-	print("Remaining hostiles in VJ human spawnplatforms:");
-	for name, amount in pairs(enemiesRemaining) do
-		print(name .. " : " .. tostring(amount));
-	end
-end )
+end);
 
 -----------------------------------
 -- Lexical Patented Corpse Eater --
@@ -135,6 +136,7 @@ local function clientOptions(panel)
 		Help = true,
 		Command = "log_remainingvjspawnplatnpcs",
 	});
+
 end
 
 local function adminOptions(panel)

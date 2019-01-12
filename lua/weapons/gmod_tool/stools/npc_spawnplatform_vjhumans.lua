@@ -60,8 +60,18 @@ local cvars = {
 	vjishostile   = "0";
 }
 
+local batcherCvars = {
+	batcher_totalmaxspawned = "50";
+	batcher_inputjson = "";
+	-- batcher_addentry_name = "default";
+	-- batcher_addentry_amount = "100";
+	-- batcher_addentry_hostile = "0";
+	batcher_selectedindex = "0";
+}
+
 cleanup.Register("Spawnplatforms");
 table.Merge(TOOL.ClientConVar, cvars);
+table.Merge(TOOL.ClientConVar, batcherCvars);
 
 function TOOL:LeftClick(trace)
 	local owner = self:GetOwner();
@@ -165,6 +175,10 @@ AddToolLanguage("vjcanmelee",   "Can Use Melee Attack");
 AddToolLanguage("vjcanmoveshoot",   "Can Shoot While Moving");
 AddToolLanguage("vjhealth",   "Override Health");
 AddToolLanguage("vjishostile",   "Is Hostile");
+AddToolLanguage("batcher_inputjson",   "Input JSON");
+AddToolLanguage("batcher_totalmaxspawned",   "Shared 'max in action'");
+AddToolLanguage("batcher_addentry_name",   "Preset to Add");
+AddToolLanguage("batcher_addentry_amount",   "Turn off After");
 -- Control Descs
 AddToolLanguage("vjshootdist.desc",         "How far the spawned NPC can shoot");
 AddToolLanguage("vjcangrenade.desc",         "Can the NPC throw grenades?");
@@ -183,10 +197,16 @@ AddToolLanguage("autoremove.desc",    "All NPCs spawned by a platform will be re
 AddToolLanguage("spawnheight.desc",   "Spawn NPCs higher than the platform to avoid obsticles");
 AddToolLanguage("spawnradius.desc",   "Spawn NPCs in a circle around the platform. 0 spawns them on the platform");
 AddToolLanguage("healthmul.desc",     "Increase the health of spawned NPCs for more longer fights");
+AddToolLanguage("batcher_inputjson.desc", "Enter a JSON string with an array of objects that have 'preset' and 'amount' entries");
+AddToolLanguage("batcher_totalmaxspawned.desc", "Batcher entries will have their 'Maximum in Action' value overridden so that their sum results in this (considering each entry's amount)");
 -- Help!
 AddToolLanguage("positioning.help", "Prevent your NPCs getting stuck in each other by disabling collisions or spacing their spawns out.");
 AddToolLanguage("squads.help1", "NPCs in a squad talk to each other to improve tactics. By default, all NPCs spawned by a spawn platform are in the same squad.");
 AddToolLanguage("squads.help2", "If you want a squad to cover more than one platform, use a global squad. Be careful not to let your squads get to big or your game will lag!");
+
+AddToolLanguage("batcher.help1", "The batcher allows the use of presets with tweaked or balanced settings without having to create new presets.");
+AddToolLanguage("batcher.help2", "You can add entries manually...");
+AddToolLanguage("batcher.help3", "Or import them from elsewhere via JSON");
 -- Panels
 AddToolLanguage("panel_npc",          "NPC Selection");
 AddToolLanguage("panel_spawning",     "NPC Spawn Rates");
@@ -194,6 +214,11 @@ AddToolLanguage("panel_vjhuman",     "VJ Human Settings");
 AddToolLanguage("panel_activation",   "Platform Activation");
 AddToolLanguage("panel_positioning",  "NPC Positioning");
 AddToolLanguage("panel_other",        "Other");
+AddToolLanguage("panel_batcher",        "Spawn Batcher");
+--btns
+AddToolLanguage("btn_addtobatcher",        "Add to Batch List");
+AddToolLanguage("btn_clearbatcher",        "Clear Batch List");
+AddToolLanguage("btn_rmselfrombatcher",        "Remove Selected from Batch List");
 -- Inferior Tech
 language.Add("Cleanup_Spawnplatforms", "NPC Spawn Platforms");
 language.Add("Cleaned_Spawnplatforms", "Cleaned up all NPC Spawn Platforms");
@@ -217,7 +242,6 @@ function TOOL.BuildCPanel(CPanel)
 		Text        = lang 'name';
 		Description = lang 'desc';
 	});
-	local combo, options;
 	-- Presets
 	local CVars = {};
 	local defaults = {};
@@ -227,7 +251,7 @@ function TOOL.BuildCPanel(CPanel)
 		defaults[key] = default;
 	end
 
-	CPanel:AddControl("ComboBox", {
+local presetsBox = CPanel:AddControl("ComboBox", {
 		Label   = "#Presets";
 		Folder  = "spawnplatform_vjhumans";
 		CVars   = CVars;
@@ -381,5 +405,85 @@ function TOOL.BuildCPanel(CPanel)
 		});
 		-- Global Squad On/Off
 		AddControl(CPanel, "Checkbox", "oldspawning");
+	end
+	do --batcher
+		local batcherCat = vgui.Create("DForm");
+
+		local function refillComboxWithPresets(combox)
+			combox:Clear();
+			for presetName, _ in pairs(presets.GetTable("spawnplatform_vjhumans")) do
+				combox:AddChoice(presetName);
+			end
+
+			combox:ChooseOptionID(1);
+		end
+
+		local function chooseComboxEntryByName(combox, name)
+			local index = 1;
+			local entryTxt = combox:GetOptionText(index);
+			while(combox.Choices[i]) do
+				if(entryTxt == name) then
+					combox:ChooseOptionID(index);
+					break;
+				else
+					index = index + 1;
+					entryTxt = combox:GetOptionText(index);
+				end
+			end
+		end
+
+		batcherCat:SetName(lang("panel_batcher"));
+		batcherCat:SetExpanded(false);
+
+		batcherCat:Help(lang "batcher.help1");
+
+
+		local batchList = vgui.Create("VJHumanSpawnPlatBatcherList");
+		local function onRowSelected(_, _, line)
+			print("Selected a row from the batcher list!");
+			chooseComboxEntryByName(presetsBox.DropDown, line:GetColumnText(1));
+			RunConsoleCommand(cvar("totallimit"), line:GetColumnText(2));
+		end
+		batchList.OnRowSelected = onRowSelected;
+		batcherCat:AddItem(batchList);
+
+
+
+		-- batcherCat:Help(lang "batcher.help2"); --add/remove manual entry stuff goes here
+		local addManualCat = vgui.Create("DForm");
+
+		local pickPresetBox = addManualCat:ComboBox(lang("batcher_addentry_name"));
+		refillComboxWithPresets(pickPresetBox);
+
+		local presetAmount = addManualCat:NumberWang(lang("batcher_addentry_amount"), nil, 0, 999, 0);
+		local presetHostile = addManualCat:CheckBox(lang("vjishostile"));
+
+		local addedBtn = addManualCat:Button(lang("btn_addtobatcher"));
+		addedBtn.DoClick = function()
+			batchList:AddLine(pickPresetBox:GetSelected(),
+			presetAmount:GetValue(),
+			 presetHostile:GetChecked());
+		end
+
+		batcherCat:AddItem(addManualCat);
+
+		addedBtn = batcherCat:Button(lang("btn_rmselfrombatcher"));
+		addedBtn.DoClick = function()
+			if(batchList:GetSelectedLine()) then
+				batchList:RemoveLine(batchList:GetSelectedLine());
+			end
+		end
+
+		addedBtn = batcherCat:Button(lang("btn_clearbatcher"));
+		addedBtn.DoClick = function()
+			batchList:Clear();
+		end
+
+		batcherCat:Help(lang "batcher.help3"); --JSON stuff goes here
+
+
+		CPanel:AddItem(batcherCat);
+
+
 	end
 end
