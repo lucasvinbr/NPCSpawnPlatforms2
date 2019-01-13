@@ -31,7 +31,7 @@ MsgN(ClassName, ' reloaded');
 TOOL.Category     = "Lexical Tools";
 TOOL.Name         = lang("name");
 --- Default Values
-local cvars = {
+local npcCvars = {
 	npc           = "npc_combine_s";
 	weapon        = "weapon_smg1";
 	spawnheight   = "16";
@@ -61,8 +61,8 @@ local cvars = {
 }
 
 local batcherCvars = {
-	batcher_totalmaxspawned = "50";
-	batcher_inputjson = "";
+	batcher_totalmaxinaction = "50";
+	-- batcher_inputjson = "";
 	-- batcher_addentry_name = "default";
 	-- batcher_addentry_amount = "100";
 	-- batcher_addentry_hostile = "0";
@@ -70,7 +70,7 @@ local batcherCvars = {
 }
 
 cleanup.Register("Spawnplatforms");
-table.Merge(TOOL.ClientConVar, cvars);
+table.Merge(TOOL.ClientConVar, npcCvars);
 table.Merge(TOOL.ClientConVar, batcherCvars);
 
 function TOOL:LeftClick(trace)
@@ -132,7 +132,7 @@ function TOOL:RightClick(trace)
 end
 
 function TOOL:SetKVs(ent)
-	for key in pairs(cvars) do
+	for key in pairs(npcCvars) do
 		-- Things that've been
 		ent:SetKeyValue(key, self:GetClientInfo(key));
 	end
@@ -176,7 +176,7 @@ AddToolLanguage("vjcanmoveshoot",   "Can Shoot While Moving");
 AddToolLanguage("vjhealth",   "Override Health");
 AddToolLanguage("vjishostile",   "Is Hostile");
 AddToolLanguage("batcher_inputjson",   "Input JSON");
-AddToolLanguage("batcher_totalmaxspawned",   "Shared 'max in action'");
+AddToolLanguage("batcher_totalmaxinaction",   "Shared 'max in action'");
 AddToolLanguage("batcher_addentry_name",   "Preset to Add");
 AddToolLanguage("batcher_addentry_amount",   "Turn off After");
 -- Control Descs
@@ -198,15 +198,14 @@ AddToolLanguage("spawnheight.desc",   "Spawn NPCs higher than the platform to av
 AddToolLanguage("spawnradius.desc",   "Spawn NPCs in a circle around the platform. 0 spawns them on the platform");
 AddToolLanguage("healthmul.desc",     "Increase the health of spawned NPCs for more longer fights");
 AddToolLanguage("batcher_inputjson.desc", "Enter a JSON string with an array of objects that have 'preset' and 'amount' entries");
-AddToolLanguage("batcher_totalmaxspawned.desc", "Batcher entries will have their 'Maximum in Action' value overridden so that their sum results in this (considering each entry's amount)");
+AddToolLanguage("batcher_totalmaxinaction.desc", "If not 0, Batcher entries will have their 'Maximum in Action' value overridden so that their sum results in this (considering each entry's amount and the limit defined in the config)");
 -- Help!
 AddToolLanguage("positioning.help", "Prevent your NPCs getting stuck in each other by disabling collisions or spacing their spawns out.");
 AddToolLanguage("squads.help1", "NPCs in a squad talk to each other to improve tactics. By default, all NPCs spawned by a spawn platform are in the same squad.");
 AddToolLanguage("squads.help2", "If you want a squad to cover more than one platform, use a global squad. Be careful not to let your squads get to big or your game will lag!");
 
 AddToolLanguage("batcher.help1", "The batcher allows the use of presets with tweaked or balanced settings without having to create new presets.");
-AddToolLanguage("batcher.help2", "You can add entries manually...");
-AddToolLanguage("batcher.help3", "Or import them from elsewhere via JSON");
+AddToolLanguage("batcher.help2", "Expected JSON format: {\"troops\":[{\"name\":\"Soldier1\",\"amount\":80,\"hostile\":\"true\"},{\"name\":\"Soldier2\",\"amount\":40}]}");
 -- Panels
 AddToolLanguage("panel_npc",          "NPC Selection");
 AddToolLanguage("panel_spawning",     "NPC Spawn Rates");
@@ -215,10 +214,14 @@ AddToolLanguage("panel_activation",   "Platform Activation");
 AddToolLanguage("panel_positioning",  "NPC Positioning");
 AddToolLanguage("panel_other",        "Other");
 AddToolLanguage("panel_batcher",        "Spawn Batcher");
+AddToolLanguage("panel_batcher_addmanual",        "Add Entries Manually");
+AddToolLanguage("panel_batcher_addjson",        "Add Entries via JSON");
 --btns
 AddToolLanguage("btn_addtobatcher",        "Add to Batch List");
+AddToolLanguage("btn_addtobatcher_json",        "Import to Batch List");
 AddToolLanguage("btn_clearbatcher",        "Clear Batch List");
 AddToolLanguage("btn_rmselfrombatcher",        "Remove Selected from Batch List");
+AddToolLanguage("btn_reloadpresets",        "Reload Preset List");
 -- Inferior Tech
 language.Add("Cleanup_Spawnplatforms", "NPC Spawn Platforms");
 language.Add("Cleaned_Spawnplatforms", "Cleaned up all NPC Spawn Platforms");
@@ -245,7 +248,7 @@ function TOOL.BuildCPanel(CPanel)
 	-- Presets
 	local CVars = {};
 	local defaults = {};
-	for key, default in pairs(cvars) do
+	for key, default in pairs(npcCvars) do
 		key = cvar(key);
 		table.insert(CVars, key);
 		defaults[key] = default;
@@ -421,36 +424,77 @@ local presetsBox = CPanel:AddControl("ComboBox", {
 		local function chooseComboxEntryByName(combox, name)
 			local index = 1;
 			local entryTxt = combox:GetOptionText(index);
-			while(combox.Choices[i]) do
+			while(entryTxt ~= nil and entryTxt ~= '') do
 				if(entryTxt == name) then
 					combox:ChooseOptionID(index);
-					break;
+					return;
 				else
 					index = index + 1;
 					entryTxt = combox:GetOptionText(index);
 				end
 			end
+
+			print("(VJHumans Spawn Batcher) couldn't find preset with provided name: " .. name);
 		end
 
 		batcherCat:SetName(lang("panel_batcher"));
-		batcherCat:SetExpanded(false);
 
 		batcherCat:Help(lang "batcher.help1");
 
 
 		local batchList = vgui.Create("VJHumanSpawnPlatBatcherList");
-		local function onRowSelected(_, _, line)
-			print("Selected a row from the batcher list!");
+		local function onRowSelected(panel, _, line)
 			chooseComboxEntryByName(presetsBox.DropDown, line:GetColumnText(1));
-			RunConsoleCommand(cvar("totallimit"), line:GetColumnText(2));
+
+			local amount = line:GetColumnText(2);
+			local hostile = line:GetColumnText(3);
+
+			RunConsoleCommand(cvar("totallimit"), amount);
+
+			if(hostile ~= nil and hostile ~= '') then
+				if(hostile == "true") then
+					RunConsoleCommand(cvar("vjishostile"), "1");
+				else
+					RunConsoleCommand(cvar("vjishostile"), "0");
+				end
+			end
+
+			local sharedMaxInAction = cvars.Number(cvar("batcher_totalmaxinaction"), 0);
+
+			if(sharedMaxInAction > 0) then
+				local totalAmountInList = panel:GetTotalAmountInEntries();
+				local maxInAction = sharedMaxInAction * (amount / totalAmountInList);
+				if(maxInAction < 1)then
+					 maxInAction = 1;
+				 elseif(maxInAction > npcspawner.config.maxinplay)then
+					 maxInAction = npcspawner.config.maxinplay;
+				 end
+				npcspawner.debug("max in action for selected entry is " .. maxInAction);
+				RunConsoleCommand(cvar("maximum"), maxInAction);
+			end
 		end
 		batchList.OnRowSelected = onRowSelected;
 		batcherCat:AddItem(batchList);
 
+		local totalSlider = batcherCat:NumSlider(lang("batcher_totalmaxinaction"), cvar("batcher_totalmaxinaction"), 0, 50, 0);
+		totalSlider:SetToolTip(lang("batcher_totalmaxinaction.desc"));
+
+		addedBtn = batcherCat:Button(lang("btn_rmselfrombatcher"));
+		addedBtn.DoClick = function()
+			if(batchList:GetSelectedLine()) then
+				batchList:RemoveLine(batchList:GetSelectedLine());
+			end
+		end
+
+		addedBtn = batcherCat:Button(lang("btn_clearbatcher"));
+		addedBtn.DoClick = function()
+			batchList:Clear();
+		end
 
 
 		-- batcherCat:Help(lang "batcher.help2"); --add/remove manual entry stuff goes here
 		local addManualCat = vgui.Create("DForm");
+		addManualCat:SetLabel(lang("panel_batcher_addmanual"));
 
 		local pickPresetBox = addManualCat:ComboBox(lang("batcher_addentry_name"));
 		refillComboxWithPresets(pickPresetBox);
@@ -465,22 +509,45 @@ local presetsBox = CPanel:AddControl("ComboBox", {
 			 presetHostile:GetChecked());
 		end
 
+		addedBtn = addManualCat:Button(lang("btn_reloadpresets"));
+		addedBtn.DoClick = function()
+			refillComboxWithPresets(pickPresetBox);
+		end
+
 		batcherCat:AddItem(addManualCat);
 
-		addedBtn = batcherCat:Button(lang("btn_rmselfrombatcher"));
+
+
+		--JSON stuff goes here
+		local addJSONCat = vgui.Create("DForm");
+		addJSONCat:SetLabel(lang("panel_batcher_addjson"));
+
+		addJSONCat:Help(lang "batcher.help2");
+
+		local jsonField = addJSONCat:TextEntry(lang("batcher_inputjson"));
+
+		addedBtn = addJSONCat:Button(lang("btn_addtobatcher_json"));
+
 		addedBtn.DoClick = function()
-			if(batchList:GetSelectedLine()) then
-				batchList:RemoveLine(batchList:GetSelectedLine());
+			local rawJson = jsonField:GetValue();
+			local importedTable = util.JSONToTable(rawJson);
+			local attributeCounter = 0;
+
+			if(istable(importedTable))then
+
+				for listObj, troops in pairs(importedTable) do
+					for _, entry in pairs(troops) do
+						batchList:AddLine(entry.name,
+						entry.amount,
+						 entry.hostile);
+					end
+				end
+			else
+				print("(VJHumans Spawn Batcher) Failed to import JSON from provided string!");
 			end
 		end
 
-		addedBtn = batcherCat:Button(lang("btn_clearbatcher"));
-		addedBtn.DoClick = function()
-			batchList:Clear();
-		end
-
-		batcherCat:Help(lang "batcher.help3"); --JSON stuff goes here
-
+		batcherCat:AddItem(addJSONCat);
 
 		CPanel:AddItem(batcherCat);
 

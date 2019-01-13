@@ -22,21 +22,32 @@ DEFINE_BASECLASS "DListView";
 
 function PANEL:Init()
 
-	function onRowSelected(_, _, line)
-		print("Selected a row from the batcher list!");
-	end
-
 	self:SetMultiSelect( false );
 	self:AddColumn( "#preset" );
 	self:AddColumn( "#amount" );
 	self:AddColumn( "#hostile" );
 
-	self.OnRowSelected = onRowSelected;
 	self:SortByColumn(2, false);
 
 	self:SetTall(100);
 	-- self.list = ctrl;
 
+end
+
+function PANEL:GetTotalAmountInEntries()
+	local total = 0;
+	local curLineValue = 0;
+
+	for k, line in pairs(self:GetLines()) do
+		curLineValue = line:GetValue(2);
+		if(curLineValue <= 0) then --infinite amounts should count as "a lot"
+			total = total + 999;
+		else
+			total = total + curLineValue;
+		end
+	end
+
+	return total;
 end
 
 function PANEL:ControlValues( data )
