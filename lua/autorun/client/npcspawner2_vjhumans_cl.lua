@@ -74,6 +74,16 @@ concommand.Add( "log_remainingvjspawnplatnpcs", function()
 			end
 		end
 	end
+
+	print("Vj Humans Spawn Plats - Remaining Allies:");
+	for name, amount in pairs(alliesRemaining) do
+		print(name .. " : " .. amount);
+	end
+
+	print("Vj Humans Spawn Plats - Remaining Hostiles:");
+	for name, amount in pairs(enemiesRemaining) do
+		print(name .. " : " .. amount);
+	end
 end);
 
 concommand.Add( "debug_log_vjspawnplatpresetinfo", function()

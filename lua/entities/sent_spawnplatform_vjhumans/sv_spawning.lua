@@ -38,7 +38,8 @@ local function InternalSpawnNPC( Player, Position, Normal, Class, Equipment, Ang
 		if ( IsValid( Player ) ) then
 			Player:SendLua( "Derma_Message( \"Sorry! You can't spawn that NPC!\" )" )
 		end
-	return end
+		return nil, true;
+	end
 
 	-- if ( NPCData.AdminOnly and not Player:IsAdmin() ) then return end
 
@@ -48,14 +49,14 @@ local function InternalSpawnNPC( Player, Position, Normal, Class, Equipment, Ang
 	-- This NPC has to be spawned on a ceiling ( Barnacle )
 	--
 	if ( NPCData.OnCeiling and Vector( 0, 0, -1 ):Dot( Normal ) < 0.95 ) then
-		return nil
+		return nil, true
 	end
 
 	--
 	-- This NPC has to be spawned on a floor ( Turrets )
 	--
 	if ( NPCData.OnFloor and Vector( 0, 0, 1 ):Dot( Normal ) < 0.95 ) then
-		return nil
+		return nil, true
 	else
 		bDropToFloor = true
 	end
@@ -67,6 +68,16 @@ local function InternalSpawnNPC( Player, Position, Normal, Class, Equipment, Ang
 	--
 	Offset = NPCData.Offset or Offset or 32
 	Position = Position + Normal * Offset
+
+	--VJ humans seem to bug out when overlapping each other,
+	--so do not spawn while we're obstructed by other npcs
+	local nearbyEnts = ents.FindInSphere(Position, 20)
+
+	for _, nearEnt in pairs(nearbyEnts) do
+		if(IsValid(nearEnt) && nearEnt:IsNPC()) then
+			return nil, false; --let the spawner keep going in this case
+		end
+	end
 
 
 	-- Create NPC
@@ -154,7 +165,7 @@ local function InternalSpawnNPC( Player, Position, Normal, Class, Equipment, Ang
 		NPC:DropToFloor()
 	end
 
-	return NPC
+	return NPC, true;
 
 end
 
@@ -325,16 +336,20 @@ function ENT:SpawnOne()
 	debugoverlay.Axis(position, angles, 10, 10, true);
 	debugoverlay.Line(position, position + normal * offset, 10, Color(255, 255, 0), true);
 
-	local npc;
+	local npc, trueSpawnFailure = true; --if we fail and no one said it's ok, it's serious
 	if (npcdata) then
-		npc = InternalSpawnNPC(ply, position, normal, class, weapon, angles, offset);
+		npc, trueSpawnFailure = InternalSpawnNPC(ply, position, normal, class, weapon, angles, offset);
 	else
 		npc = legacySpawn(ply, position, normal, class, weapon, angles, offset);
 	end
 
 	if (not IsValid(npc)) then
-		self:TurnOff();
-		error("Failed to create a NPC of type '"..class.."'!");
+		if(trueSpawnFailure) then
+			self:TurnOff();
+			error("Failed to create a NPC of type '"..class.."'!");
+		end
+		--fail silently and try again otherwise
+		return false;
 	end
 
 	npcspawner.debug2("NPC Entity:", npc);
