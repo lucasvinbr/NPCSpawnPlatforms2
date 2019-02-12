@@ -154,7 +154,10 @@ end
 
 function ENT:TurnOn()
 	self:SetActive(true);
-	self:SetTotalSpawnedNPCs(0);
+	--reset the spawn count only if we had run out of spawns
+	if ((self:GetMaxNPCsTotal() - self:GetTotalSpawnedNPCs()) <= 0) then
+		self:SetTotalSpawnedNPCs(0);
+	end
 	self:SetSpawnDelay(self:GetStartDelay());
 	self:TriggerWireOutput("TotalNPCsSpawned", self:GetTotalSpawnedNPCs());
 	self:UpdateLabel();
