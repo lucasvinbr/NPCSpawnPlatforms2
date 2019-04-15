@@ -288,6 +288,12 @@ ENT._NWVars = {
 		KeyName = "vjishostile";
 		Default = false;
 	},
+	{
+		Type = "String";
+		Name = "VjOverrideClass";
+		KeyName = "vjoverrideclass";
+		Default = "";
+	},
 }
 
 function ENT:SetupDataTables()

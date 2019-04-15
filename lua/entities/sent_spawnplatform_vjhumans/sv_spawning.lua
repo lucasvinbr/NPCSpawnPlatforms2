@@ -265,6 +265,10 @@ function ENT:ConfigureNPCSquad(npc)
 		squad = tostring(self);
 	end
 
+	if(self:GetVjOverrideClass() ~= "") then
+		npc.VJ_NPC_Class = {self:GetVjOverrideClass()};
+	end
+
 	npcspawner.debug2("Squad:", squad);
 	npc:SetKeyValue("squadname", squad);
 end

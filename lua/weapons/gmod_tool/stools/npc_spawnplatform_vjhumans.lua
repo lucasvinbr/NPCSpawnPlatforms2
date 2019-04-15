@@ -58,6 +58,7 @@ local npcCvars = {
 	vjcangrenade  = "1";
 	vjcanmoveshoot= "1";
 	vjishostile   = "0";
+	vjoverrideclass = "";
 }
 
 local batcherCvars = {
@@ -167,6 +168,7 @@ AddToolLanguage("frozen",        "Spawn the platform frozen");
 AddToolLanguage("customsquads",  "Use Global Squad");
 AddToolLanguage("squadoverride", "Global Squad Number");
 AddToolLanguage("oldspawning",   "Use old spawning mode");
+AddToolLanguage("vjoverrideclass",   "Override VJ Human Class");
 AddToolLanguage("vjshootdist",   "Shoot Distance");
 AddToolLanguage("vjweaponspread","Weapon Spread");
 AddToolLanguage("vjmeleedamage", "Melee Damage");
@@ -408,6 +410,8 @@ local presetsBox = CPanel:AddControl("ComboBox", {
 		});
 		-- Global Squad On/Off
 		AddControl(CPanel, "Checkbox", "oldspawning");
+
+		AddControl(CPanel, "Textbox", "vjoverrideclass");
 	end
 	do --batcher
 		local batcherCat = vgui.Create("DForm");
