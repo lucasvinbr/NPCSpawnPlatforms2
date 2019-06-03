@@ -58,6 +58,9 @@ local npcCvars = {
 	vjcangrenade  = "1";
 	vjcanmoveshoot= "1";
 	vjishostile   = "0";
+}
+
+local notSavedNpcCvars = {
 	vjoverrideclass = "";
 }
 
@@ -72,6 +75,7 @@ local batcherCvars = {
 
 cleanup.Register("Spawnplatforms");
 table.Merge(TOOL.ClientConVar, npcCvars);
+table.Merge(TOOL.ClientConVar, notSavedNpcCvars);
 table.Merge(TOOL.ClientConVar, batcherCvars);
 
 function TOOL:LeftClick(trace)
@@ -137,6 +141,7 @@ function TOOL:SetKVs(ent)
 		-- Things that've been
 		ent:SetKeyValue(key, self:GetClientInfo(key));
 	end
+	ent:SetKeyValue("vjoverrideclass", self:GetClientInfo("vjoverrideclass"));
 end
 
 if (SERVER) then return; end
