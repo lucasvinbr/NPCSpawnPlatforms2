@@ -459,9 +459,9 @@ local presetsBox = CPanel:AddControl("ComboBox", {
 			local hostile = line:GetColumnText(3);
 
 			RunConsoleCommand(cvar("totallimit"), amount);
-
+			
 			if(hostile ~= nil and hostile ~= '') then
-				if(hostile == "true") then
+				if(hostile == true) then
 					RunConsoleCommand(cvar("vjishostile"), "1");
 				else
 					RunConsoleCommand(cvar("vjishostile"), "0");
