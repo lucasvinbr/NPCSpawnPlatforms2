@@ -47,7 +47,6 @@ local npcCvars = {
 	customsquads  = "0";
 	totallimit    = "0";
 	active        = "0";
-	oldspawning   = "0";
 	frozen        = "1";
 
 	vjhealth      = "0";
@@ -58,10 +57,13 @@ local npcCvars = {
 	vjcangrenade  = "1";
 	vjcanmoveshoot= "1";
 	vjishostile   = "0";
+
+
 }
 
 local notSavedNpcCvars = {
 	vjoverrideclass = "";
+	vjnpcsuffixifhostile = "";
 }
 
 local batcherCvars = {
@@ -114,7 +116,8 @@ function TOOL:LeftClick(trace)
 	undo.Create("NPC Spawn Platform");
 		undo.SetPlayer(self:GetOwner());
 		undo.AddEntity(ent);
-		undo.SetCustomUndoText("Undone a " .. self:GetClientInfo("npc") .. " spawn platform" .. (tonumber(self:GetClientInfo("autoremove")) > 0 and " and all its NPCs." or "."));
+		undo.SetCustomUndoText("Undone a " .. self:GetClientInfo("npc") .. " spawn platform" ..
+			(tonumber(self:GetClientInfo("autoremove")) > 0 and " and all its NPCs." or "."));
 	undo.Finish();
 	cleanup.Add(self:GetOwner(), "Spawnplatforms", ent);
 	return true;
@@ -139,7 +142,12 @@ end
 function TOOL:SetKVs(ent)
 	for key in pairs(npcCvars) do
 		-- Things that've been
-		ent:SetKeyValue(key, self:GetClientInfo(key));
+		if(key == "npc" and self:GetClientInfo("vjishostile") == "1") then
+			ent:SetKeyValue(key, self:GetClientInfo(key) .. self:GetClientInfo("vjnpcsuffixifhostile"));
+		else
+			ent:SetKeyValue(key, self:GetClientInfo(key));
+		end
+
 	end
 	ent:SetKeyValue("vjoverrideclass", self:GetClientInfo("vjoverrideclass"));
 end
@@ -155,9 +163,7 @@ AddToolLanguage("0",    "Left-click: Spawn/Update Platform. Right-click: Copy Pl
 -- Controls
 AddToolLanguage("npc",           "NPC");
 AddToolLanguage("weapon",        "Weapon");
-AddToolLanguage("skill",         "Weapon Skill");
 AddToolLanguage("delay",         "Spawning Delay");
-AddToolLanguage("decrease",      "Decrease Delay Amount");
 AddToolLanguage("maximum",       "Maximum In Action");
 AddToolLanguage("totallimit",    "Turn Off After");
 AddToolLanguage("autoremove",    "Clean up on Remove");
@@ -168,12 +174,11 @@ AddToolLanguage("active",        "Start Active");
 AddToolLanguage("nocollide",     "Disable NPC Collisions");
 AddToolLanguage("spawnheight",   "Spawn Height");
 AddToolLanguage("spawnradius",   "Spawn Radius");
-AddToolLanguage("healthmul",     "Health Multiplier");
 AddToolLanguage("frozen",        "Spawn the platform frozen");
 AddToolLanguage("customsquads",  "Use Global Squad");
 AddToolLanguage("squadoverride", "Global Squad Number");
-AddToolLanguage("oldspawning",   "Use old spawning mode");
 AddToolLanguage("vjoverrideclass",   "Override VJ Human Class");
+AddToolLanguage("vjnpcsuffixifhostile", "VJ NPC Suffix if Hostile");
 AddToolLanguage("vjshootdist",   "Shoot Distance");
 AddToolLanguage("vjweaponspread","Weapon Spread");
 AddToolLanguage("vjmeleedamage", "Melee Damage");
@@ -195,15 +200,13 @@ AddToolLanguage("vjhealth.desc",         "Sets a new max health for the spawned 
 AddToolLanguage("vjmeleedamage.desc",         "The damage caused by the NPC's melee attack");
 AddToolLanguage("vjweaponspread.desc",         "The NPC's weapon accuracy. The closer to 0 the better");
 AddToolLanguage("vjishostile.desc",         "Is the NPC hostile to the player and HL2 Resistance?");
-AddToolLanguage("skill.desc",         string.format("Where %d is terrible and %d is perfect", WEAPON_PROFICIENCY_POOR, WEAPON_PROFICIENCY_PERFECT));
+AddToolLanguage("vjnpcsuffixifhostile.desc",         "Suffix added to the NPC type if the 'is hostile' option is on (will use 'Soldier H' instead of 'Soldier' if hostile and this suffix is set to ' H', for example)");
 AddToolLanguage("delay.desc",         "The delay between each NPC spawn.");
-AddToolLanguage("decrease.desc",      "How much to decrease the delay by every time you kill every NPC spawned.");
 AddToolLanguage("maximum.desc",       "The platform will pause spawning until you kill one of the spawned ones");
 AddToolLanguage("totallimit.desc",    "Turn the platform off after this many NPC have been spawned");
 AddToolLanguage("autoremove.desc",    "All NPCs spawned by a platform will be removed with the platform.");
 AddToolLanguage("spawnheight.desc",   "Spawn NPCs higher than the platform to avoid obsticles");
 AddToolLanguage("spawnradius.desc",   "Spawn NPCs in a circle around the platform. 0 spawns them on the platform");
-AddToolLanguage("healthmul.desc",     "Increase the health of spawned NPCs for more longer fights");
 AddToolLanguage("batcher_inputjson.desc", "Enter a JSON string with an array of objects that have 'preset' and 'amount' entries");
 AddToolLanguage("batcher_totalmaxinaction.desc", "If not 0, Batcher entries will have their 'Maximum in Action' value overridden so that their sum results in this (considering each entry's amount and the limit defined in the config)");
 -- Help!
@@ -413,10 +416,11 @@ local presetsBox = CPanel:AddControl("ComboBox", {
 			Min         = 1;
 			Max         = 50;
 		});
-		-- Global Squad On/Off
-		AddControl(CPanel, "Checkbox", "oldspawning");
 
 		AddControl(CPanel, "Textbox", "vjoverrideclass");
+		AddControl(CPanel, "Textbox", "vjnpcsuffixifhostile", {
+			Description = true;
+		});
 	end
 	do --batcher
 		local batcherCat = vgui.Create("DForm");
@@ -459,7 +463,7 @@ local presetsBox = CPanel:AddControl("ComboBox", {
 			local hostile = line:GetColumnText(3);
 
 			RunConsoleCommand(cvar("totallimit"), amount);
-			
+
 			if(hostile ~= nil and hostile ~= '') then
 				if(hostile == true) then
 					RunConsoleCommand(cvar("vjishostile"), "1");

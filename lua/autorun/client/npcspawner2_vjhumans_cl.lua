@@ -55,22 +55,18 @@ concommand.Add( "log_remainingvjspawnplatnpcs", function()
 	local alliesRemaining = {};
 	local enemiesRemaining = {};
 
-	local function GetRemainingNPCsInPlat(platform)
-		return platform:GetMaxNPCsTotal() - (platform:GetTotalSpawnedNPCs() - platform:GetCurSpawnedNPCs());
-	end
-
 	for _, plat in pairs( ents.FindByClass( "sent_spawnplatform_vjhumans" ) ) do
 		if (plat:IsVjHostile()) then
 			if(enemiesRemaining[plat:GetNPC()]) then
-				enemiesRemaining[plat:GetNPC()] = enemiesRemaining[plat:GetNPC()] + GetRemainingNPCsInPlat(plat);
+				enemiesRemaining[plat:GetNPC()] = enemiesRemaining[plat:GetNPC()] + plat:CalcRemainingNPCs();
 			else
-				enemiesRemaining[plat:GetNPC()] = GetRemainingNPCsInPlat(plat);
+				enemiesRemaining[plat:GetNPC()] = plat:CalcRemainingNPCs();
 			end
 		else
 			if(alliesRemaining[plat:GetNPC()]) then
-				alliesRemaining[plat:GetNPC()] = alliesRemaining[plat:GetNPC()] + GetRemainingNPCsInPlat(plat);
+				alliesRemaining[plat:GetNPC()] = alliesRemaining[plat:GetNPC()] + plat:CalcRemainingNPCs();
 			else
-				alliesRemaining[plat:GetNPC()] = GetRemainingNPCsInPlat(plat);
+				alliesRemaining[plat:GetNPC()] = plat:CalcRemainingNPCs();
 			end
 		end
 	end
@@ -122,6 +118,7 @@ end
 language.Add("spawnmenu.utilities.spawnplatform", "NPC Spawn Platforms")
 addPanelLabel("cleanupcorpses", "Clean up corpses", "Automatically delete all NPC corpses every minute")
 addPanelLabel("adminonly", "Admins Only", "Prevent normal users from spawning platforms")
+addPanelLabel("playerdeathscounttowardplats", "Player Deaths can Count towards Platform Spawns", "Players can link themselves to a spawn platform to make their deaths count as spawns from that plat. This allows or disables this effect")
 addPanelLabel("callhooks", "Call Sandbox Hooks", "Act as if the user had used the spawn menu to spawn NPCs. This will force the platform to obey entity limits etc.")
 addPanelLabel("maxinplay", "Max NPCs per Platform", "How many NPCs a single platform may have alive at once")
 addPanelLabel("mindelay", "Minimum Spawn Delay", "The minimum delay a platform must wait before spawning a new NPC")
@@ -153,6 +150,12 @@ local function adminOptions(panel)
 	panel:AddControl("CheckBox", {
 		Label   = lang("adminonly"),
 		Command = cvar("adminonly"),
+		Help    = true,
+	});
+
+	panel:AddControl("CheckBox", {
+		Label   = lang("playerdeathscounttowardplats"),
+		Command = cvar("playerdeathscounttowardplats"),
 		Help    = true,
 	});
 

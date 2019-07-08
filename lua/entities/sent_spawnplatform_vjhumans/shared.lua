@@ -56,7 +56,7 @@ NPC: %s
 Weapon: %s
 Delay: %0.2f
 Maximum: %d
-Remaining: %d]]
+Remaining: %d%s]]
 
 local overlayTextFlipped = "Cannot spawn %ss at this angle!"
 
@@ -74,9 +74,22 @@ function ENT:UpdateLabel()
 			convert(self:GetNPCWeapon()),
 					self:GetSpawnDelay(),
 					self:GetMaxNPCs(),
-					self:GetMaxNPCsTotal() - (self:GetTotalSpawnedNPCs() - self:GetCurSpawnedNPCs())
+					self:GetMaxNPCsTotal() - (self:GetTotalSpawnedNPCs() - self:GetCurSpawnedNPCs()),
+					self:GetLinkedPlayerForLabel()
 		)
 	);
+end
+
+function ENT:CalcRemainingNPCs()
+	return self:GetMaxNPCsTotal() - (self:GetTotalSpawnedNPCs() - self:GetCurSpawnedNPCs());
+end
+
+function ENT:GetLinkedPlayerForLabel()
+	if IsValid(self:GetPlayerWhoseDeathsCount()) then
+		return "\nLinked Player Deaths: " .. self:GetPlayerWhoseDeathsCount():GetName();
+	end
+
+	return ""
 end
 
 function ENT:GetNPCName()
@@ -179,12 +192,6 @@ ENT._NWVars = {
 		Type = "Float";
 		Name = "SpawnDelay";
 	},
-	{
-		Type = "Bool";
-		Name = "LegacySpawnMode";
-		LegacyName = "oldspawning";
-		Default = False;
-	},
 
 	{
 		Type = "Bool";
@@ -235,10 +242,10 @@ ENT._NWVars = {
 		KeyName = "ply";
 	},
 	{
-		Type = "Int";
-		Name = "TeamNumber";
-		KeyName = "teamnum";
-		Default = 0;
+		Type = "Entity";
+		Name = 	"PlayerWhoseDeathsCount";
+		KeyName = "playerwhosedeathscount";
+		Default = NULL;
 	},
 	{
 		Type = "Int";

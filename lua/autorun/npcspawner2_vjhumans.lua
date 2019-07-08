@@ -62,6 +62,7 @@ npcspawner = {
     weps = {};
     config = {
         adminonly   = 0,
+        playerdeathscounttowardplats = 1,
         callhooks   = 1,
         maxinplay   = 20,
         mindelay    = 0.1,

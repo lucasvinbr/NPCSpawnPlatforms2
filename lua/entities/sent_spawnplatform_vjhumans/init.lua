@@ -18,10 +18,9 @@
 AddCSLuaFile("shared.lua");
 include("shared.lua");
 
-include("sv_duplication.lua")
-include("sv_reliability.lua")
-include("sv_spawning.lua")
-include("sv_wire.lua")
+include("sv_duplication.lua");
+include("sv_reliability.lua");
+include("sv_spawning.lua");
 
 DEFINE_BASECLASS(ENT.Base);
 
@@ -73,8 +72,6 @@ function ENT:Initialize()
 	self:SetCurSpawnedNPCs(0);
 	self.NPCs    = {};
 	self:UpdateLabel();
-
-	self:SetupWire();
 end
 
 function ENT:CanSpawnNPC()
@@ -121,7 +118,7 @@ function ENT:NPCKilled(npc)
 	npcspawner.debug2("NPC Killed:", npc);
 	self.NPCs[npc] = nil;
 	-- Make the delay apply after the nth NPC dies.
-	if (not self:GetLegacySpawnMode() and self:GetCurSpawnedNPCs() >= self:GetMaxNPCs()) then
+	if (self:GetCurSpawnedNPCs() >= self:GetMaxNPCs()) then
 		self.LastSpawn = CurTime();
 	end
 	self:SetCurSpawnedNPCs(self:GetCurSpawnedNPCs() - 1);

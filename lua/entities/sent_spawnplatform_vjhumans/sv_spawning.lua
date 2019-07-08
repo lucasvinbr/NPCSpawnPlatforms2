@@ -370,11 +370,6 @@ function ENT:SpawnOne()
 	self:SetCurSpawnedNPCs(self:GetCurSpawnedNPCs() + 1);
 	self:TriggerWireOutput("ActiveNPCs", self:GetCurSpawnedNPCs());
 
-	self:SetTotalSpawnedNPCs(self:GetTotalSpawnedNPCs() + 1);
-	self:TriggerWireOutput("TotalNPCsSpawned", self:GetTotalSpawnedNPCs());
-
-	self:UpdateLabel();
-
 	self.LastSpawn = CurTime();
 
 	self:TriggerWireOutput("LastNPCSpawned", npc);
@@ -392,11 +387,22 @@ function ENT:SpawnOne()
 		end
 	end
 
+	self:IncrementTotalSpawns();
+
+	return true;
+end
+
+
+function ENT:IncrementTotalSpawns()
+
+	self:SetTotalSpawnedNPCs(self:GetTotalSpawnedNPCs() + 1);
+	self:TriggerWireOutput("TotalNPCsSpawned", self:GetTotalSpawnedNPCs());
+
+	self:UpdateLabel();
+
 	if (self:GetTotalSpawnedNPCs() == self:GetMaxNPCsTotal()) then -- Since totallimit is 0 for off and totalspawned will always be > 0 at this point, shit works.
 		npcspawner.debug("totallimit ("..self:GetMaxNPCsTotal()..") hit. Turning off.");
 		self:TriggerOutput("OnLimitReached", self);
 		self:TurnOff();
 	end
-
-	return true;
 end

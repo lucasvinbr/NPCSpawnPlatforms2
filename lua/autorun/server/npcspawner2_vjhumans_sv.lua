@@ -84,3 +84,25 @@ if (not ConVarExists("sbox_maxspawnplatforms")) then
 	CreateConVar("sbox_maxspawnplatforms", 3);
 end
 cleanup.Register("sent_spawnplatform_vjhumans");
+
+
+hook.Add("PlayerDeath", "NPCSpawnerVJHumans PlayerDeath", function(killedPlyr, _, _)
+	
+	if npcspawner.config.playerdeathscounttowardplats < 1 then return end
+
+	npcspawner.debug2("NPCSpawnerVJHumans PlayerDeath hook start!");
+	for _, plat in pairs( ents.FindByClass( "sent_spawnplatform_vjhumans" ) ) do
+		if(plat:CalcRemainingNPCs() > 0) then
+			if (IsValid(plat:GetPlayerWhoseDeathsCount())) then
+				npcspawner.debug2("found plat with valid whoseDeaths!");
+				if (plat:GetPlayerWhoseDeathsCount():GetName() == killedPlyr:GetName()) then
+					npcspawner.debug2("incrementing total spawns of plat!");
+					plat:IncrementTotalSpawns();
+					return;
+				end
+			end
+		end
+		
+	end
+	npcspawner.debug2("NPCSpawnerVJHumans PlayerDeath didn't affect any plat");
+end)

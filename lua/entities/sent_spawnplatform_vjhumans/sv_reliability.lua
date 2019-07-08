@@ -1,5 +1,5 @@
 --[[
-	NPC Spawn Platforms V2 - lua/entities/sent_spawnplatform/sv_wire.lua
+	NPC Spawn Platforms V2 - lua/entities/sent_spawnplatform/sv_reliability.lua
     Copyright 2009-2017 Lex Robinson
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ function ENT:RegisterListeners()
 	self:NetworkVarNotify("MaxNPCs", labelr);
 	self:NetworkVarNotify("Flipped", labelr);
 	self:NetworkVarNotify("Active", labelr);
+	self:NetworkVarNotify("PlayerWhoseDeathsCount", labelr);
 end
 
 function ENT:OnStartDelayChange(_, _, delay)
